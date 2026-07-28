@@ -103,6 +103,20 @@ app.get('/api/subscribers/count', (_req, res) => {
 });
 
 /**
+ * GET /api/test-email  — send a single test email and return result synchronously.
+ */
+app.get('/api/test-email', async (req, res) => {
+  try {
+    const { sendWelcomeEmail } = await import('./mailer.js');
+    const topic = getTodaysTopic(process.env.SCHEDULE_START_DATE || '2026-07-28');
+    await sendWelcomeEmail(process.env.TEST_RECIPIENT || process.env.GMAIL_USER, topic);
+    res.json({ ok: true, message: `Test email sent to ${process.env.TEST_RECIPIENT || process.env.GMAIL_USER}` });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
  * POST /api/send-today  — manually trigger today's email (admin use / testing).
  * Protected by a simple token check.
  */
