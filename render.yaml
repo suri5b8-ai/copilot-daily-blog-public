@@ -1,0 +1,39 @@
+services:
+  # ── Backend API (Node/Express) ─────────────────────────────────────────────
+  - type: web
+    name: copilot-blog-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: SCHEDULE_START_DATE
+        value: 2026-07-28
+      - key: SEND_HOUR
+        value: 8
+      - key: SEND_MINUTE
+        value: 0
+      - key: FROM_NAME
+        value: GitHub Copilot Daily
+      - key: GMAIL_USER
+        sync: false        # set manually in Render dashboard
+      - key: GMAIL_APP_PASSWORD
+        sync: false        # set manually in Render dashboard
+      - key: BLOG_URL
+        sync: false        # set to frontend URL after first deploy
+      - key: TEST_RECIPIENT
+        sync: false
+
+  # ── Frontend (React/Vite static site) ─────────────────────────────────────
+  - type: web
+    name: copilot-blog-frontend
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false        # set to backend URL after first deploy
