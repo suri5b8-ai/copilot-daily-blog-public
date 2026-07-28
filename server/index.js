@@ -106,7 +106,7 @@ app.get('/api/subscribers/count', (_req, res) => {
  * POST /api/send-today  — manually trigger today's email (admin use / testing).
  * Protected by a simple token check.
  */
-app.post('/api/send-today', async (req, res) => {
+app.post('/api/send-today', (req, res) => {
   const adminToken = process.env.ADMIN_TOKEN;
   if (adminToken && req.headers['x-admin-token'] !== adminToken) {
     return res.status(401).json({ error: 'Unauthorized.' });
@@ -120,12 +120,17 @@ app.post('/api/send-today', async (req, res) => {
     return res.status(200).json({ message: 'No active subscribers.', sent: 0, failed: 0 });
   }
 
-  try {
-    const result = await sendDailyEmail(topic, recipients);
-    return res.json({ message: `Day ${topic.day} email dispatched.`, ...result, topic: topic.title });
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
+  // Respond immediately — send emails in the background to avoid timeout
+  res.json({ message: `Day ${topic.day} email queued for ${recipients.length} recipients.`, topic: topic.title, queued: recipients.length });
+
+  setImmediate(async () => {
+    try {
+      const result = await sendDailyEmail(topic, recipients);
+      console.log(`[send-today] Done — sent:${result.sent} failed:${result.failed}`);
+    } catch (err) {
+      console.error('[send-today] Error:', err.message);
+    }
+  });
 });
 
 // ── Start ────────────────────────────────────────────────────────────────────
