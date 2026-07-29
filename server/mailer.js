@@ -13,23 +13,29 @@ import { WEEKS } from './topics-data.js';
  *   SMTP_FROM     display address, e.g. "GitHub Copilot Daily <you@veolia.com>"
  */
 function getTransporter() {
-  const host   = process.env.SMTP_HOST;
-  const port   = parseInt(process.env.SMTP_PORT  || '587', 10);
-  const secure = process.env.SMTP_SECURE === 'true';   // true = port 465 SSL
-  const user   = process.env.SMTP_USER;
-  const pass   = process.env.SMTP_PASS;
+  // Prefer company SMTP if configured, fall back to Gmail
+  const smtpHost = process.env.SMTP_HOST;
+  const gmailUser = process.env.GMAIL_USER;
 
-  const missing = [...(!host ? ['SMTP_HOST'] : []), ...(!user ? ['SMTP_USER'] : []), ...(!pass ? ['SMTP_PASS'] : [])];
-  if (missing.length > 0) {
-    throw new Error(`Missing env vars: ${missing.join(', ')} — defined vars: SMTP_HOST=${!!host} SMTP_USER=${!!user} SMTP_PASS=${!!pass}`);
+  if (smtpHost) {
+    const port   = parseInt(process.env.SMTP_PORT  || '587', 10);
+    const secure = process.env.SMTP_SECURE === 'true';
+    const user   = process.env.SMTP_USER;
+    const pass   = process.env.SMTP_PASS;
+    const missing = [...(!smtpHost ? ['SMTP_HOST'] : []), ...(!user ? ['SMTP_USER'] : []), ...(!pass ? ['SMTP_PASS'] : [])];
+    if (missing.length > 0) {
+      throw new Error(`Missing env vars: ${missing.join(', ')}`);
+    }
+    return nodemailer.createTransport({ host: smtpHost, port, secure, auth: { user, pass } });
   }
 
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure,
-    auth: { user, pass },
-  });
+  if (gmailUser) {
+    const pass = process.env.GMAIL_APP_PASSWORD;
+    if (!pass) throw new Error('GMAIL_APP_PASSWORD must be set in environment variables.');
+    return nodemailer.createTransport({ service: 'gmail', auth: { user: gmailUser, pass } });
+  }
+
+  throw new Error('No email transport configured. Set SMTP_HOST or GMAIL_USER in environment variables.');
 }
 
 /** Verify Gmail SMTP credentials on startup */
@@ -231,7 +237,7 @@ export async function sendDailyEmail(topic, subscriberEmails) {
   const transporter = getTransporter();
   const blogUrl  = process.env.BLOG_URL  || 'http://localhost:5173';
   const fromName = process.env.FROM_NAME || 'GitHub Copilot Daily';
-  const fromAddr = process.env.SMTP_FROM  || 'noreply-core_dev@harsco.com';
+  const fromAddr = process.env.SMTP_FROM || process.env.GMAIL_USER || 'noreply-core_dev@harsco.com';
 
   let sent = 0, failed = 0;
 
@@ -260,7 +266,7 @@ export async function sendWelcomeEmail(email, topic) {
   const transporter = getTransporter();
   const blogUrl  = process.env.BLOG_URL  || 'http://localhost:5173';
   const fromName = process.env.FROM_NAME || 'GitHub Copilot Daily';
-  const fromAddr = process.env.SMTP_FROM  || 'noreply-core_dev@harsco.com';
+  const fromAddr = process.env.SMTP_FROM || process.env.GMAIL_USER || 'noreply-core_dev@harsco.com';
   const unsubUrl = `${blogUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
 
   await transporter.sendMail({
