@@ -116,6 +116,7 @@ app.get('/api/env-check', (_req, res) => {
   // Show all env var NAMES that contain 'SMTP' (case-insensitive) to catch typos
   result._smtpKeysFound = Object.keys(process.env).filter(k => k.toUpperCase().includes('SMTP'));
   result._deployedAt = new Date().toISOString();
+  result._allKeys = Object.keys(process.env).sort();
   res.json(result);
 });
 
