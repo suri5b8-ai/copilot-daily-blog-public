@@ -110,7 +110,7 @@ app.get('/api/subscribers/count', (_req, res) => {
 
 /** GET /api/env-check  — debug: shows which SMTP vars are defined (no values) */
 app.get('/api/env-check', (_req, res) => {
-  const vars = ['SMTP_HOST','SMTP_PORT','SMTP_USER','SMTP_PASS','SMTP_FROM','SMTP_SECURE'];
+  const vars = ['SMTP_HOST','SMTP_PORT','SMTP_USER','SMTP_PASS','SMTP_FROM','SMTP_SECURE','SCHEDULE_START_DATE','SEND_HOUR','NODE_ENV'];
   const result = {};
   vars.forEach(k => { result[k] = !!process.env[k]; });
   res.json(result);
