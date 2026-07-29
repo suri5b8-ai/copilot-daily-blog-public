@@ -10,7 +10,13 @@ const app  = express();
 const PORT = process.env.PORT || 3001;
 
 // ── Middleware ───────────────────────────────────────────────────────────────
-app.use(cors({ origin: ['http://localhost:5173', 'http://127.0.0.1:5173'] }));
+const ALLOWED_ORIGINS = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'https://copilot-blog-frontend.onrender.com',
+  /\.up\.railway\.app$/,   // any Railway preview URL
+];
+app.use(cors({ origin: ALLOWED_ORIGINS }));
 app.use(express.json());
 
 // Simple input validation helper (no external library needed)
