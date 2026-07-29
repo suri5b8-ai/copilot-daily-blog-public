@@ -19,8 +19,9 @@ function getTransporter() {
   const user   = process.env.SMTP_USER;
   const pass   = process.env.SMTP_PASS;
 
-  if (!host || !user || !pass) {
-    throw new Error('SMTP_HOST, SMTP_USER and SMTP_PASS must be set in environment variables.');
+  const missing = [...(!host ? ['SMTP_HOST'] : []), ...(!user ? ['SMTP_USER'] : []), ...(!pass ? ['SMTP_PASS'] : [])];
+  if (missing.length > 0) {
+    throw new Error(`Missing env vars: ${missing.join(', ')} — defined vars: SMTP_HOST=${!!host} SMTP_USER=${!!user} SMTP_PASS=${!!pass}`);
   }
 
   return nodemailer.createTransport({
