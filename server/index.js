@@ -108,6 +108,14 @@ app.get('/api/subscribers/count', (_req, res) => {
   res.json({ count: getCount() });
 });
 
+/** GET /api/env-check  — debug: shows which SMTP vars are defined (no values) */
+app.get('/api/env-check', (_req, res) => {
+  const vars = ['SMTP_HOST','SMTP_PORT','SMTP_USER','SMTP_PASS','SMTP_FROM','SMTP_SECURE'];
+  const result = {};
+  vars.forEach(k => { result[k] = !!process.env[k]; });
+  res.json(result);
+});
+
 /**
  * GET /api/test-email  — send a single test email and return result synchronously.
  */
