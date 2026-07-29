@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "node server/index.js",
+    "start": "node index.js",
+    "postinstall": "cd server && npm install",
     "dev": "vite",
     "dev:server": "node server/index.js",
     "dev:all": "concurrently -n \"frontend,server\" -c \"cyan,magenta\" \"npm run dev\" \"npm run dev:server\"",
