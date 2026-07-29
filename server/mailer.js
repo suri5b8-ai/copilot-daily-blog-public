@@ -1,15 +1,32 @@
 import nodemailer from 'nodemailer';
 import { WEEKS } from './topics-data.js';
 
-/** Build a Nodemailer transporter using Gmail SMTP + App Password */
+/**
+ * Build a Nodemailer transporter from environment variables.
+ *
+ * Required env vars (set in Railway dashboard — never hardcode):
+ *   SMTP_HOST     e.g. smtp.veolia.com
+ *   SMTP_PORT     e.g. 587  (or 465 for SSL)
+ *   SMTP_SECURE   true = SSL/port 465 | false = STARTTLS/port 587  (default: false)
+ *   SMTP_USER     your SMTP login / email address
+ *   SMTP_PASS     your SMTP password (stored only in Railway env vars)
+ *   SMTP_FROM     display address, e.g. "GitHub Copilot Daily <you@veolia.com>"
+ */
 function getTransporter() {
-  const user = process.env.GMAIL_USER;
-  const pass = process.env.GMAIL_APP_PASSWORD;
-  if (!user || !pass || pass === 'your_app_password_here') {
-    throw new Error('GMAIL_USER or GMAIL_APP_PASSWORD is not configured. Add them to server/.env');
+  const host   = process.env.SMTP_HOST;
+  const port   = parseInt(process.env.SMTP_PORT  || '587', 10);
+  const secure = process.env.SMTP_SECURE === 'true';   // true = port 465 SSL
+  const user   = process.env.SMTP_USER;
+  const pass   = process.env.SMTP_PASS;
+
+  if (!host || !user || !pass) {
+    throw new Error('SMTP_HOST, SMTP_USER and SMTP_PASS must be set in environment variables.');
   }
+
   return nodemailer.createTransport({
-    service: 'gmail',
+    host,
+    port,
+    secure,
     auth: { user, pass },
   });
 }
@@ -213,7 +230,7 @@ export async function sendDailyEmail(topic, subscriberEmails) {
   const transporter = getTransporter();
   const blogUrl  = process.env.BLOG_URL  || 'http://localhost:5173';
   const fromName = process.env.FROM_NAME || 'GitHub Copilot Daily';
-  const fromAddr = process.env.GMAIL_USER;
+  const fromAddr = process.env.SMTP_FROM  || 'noreply-core_dev@harsco.com';
 
   let sent = 0, failed = 0;
 
@@ -242,7 +259,7 @@ export async function sendWelcomeEmail(email, topic) {
   const transporter = getTransporter();
   const blogUrl  = process.env.BLOG_URL  || 'http://localhost:5173';
   const fromName = process.env.FROM_NAME || 'GitHub Copilot Daily';
-  const fromAddr = process.env.GMAIL_USER;
+  const fromAddr = process.env.SMTP_FROM  || 'noreply-core_dev@harsco.com';
   const unsubUrl = `${blogUrl}/api/unsubscribe?email=${encodeURIComponent(email)}`;
 
   await transporter.sendMail({
